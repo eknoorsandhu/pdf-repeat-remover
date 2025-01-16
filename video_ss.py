@@ -1,7 +1,6 @@
 import os
 import cv2
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
 from tqdm import tqdm
 
 def get_mp4_files(root_dir):
@@ -39,13 +38,12 @@ def create_screenshots(video_path, output_dir):
     cap.release()
     return screenshots
 
-def create_pdf_from_screenshots(screenshots, output_pdf):
-    """Create a PDF from a list of screenshots."""
-    c = canvas.Canvas(output_pdf, pagesize=letter)
-    width, height = letter
+def create_pdf_from_screenshots(screenshots, output_pdf, frame_width, frame_height):
+    """Create a PDF from a list of screenshots with one frame per page, preserving aspect ratio."""
+    c = canvas.Canvas(output_pdf, pagesize=(frame_width, frame_height))
 
     for screenshot in screenshots:
-        c.drawImage(screenshot, 0, 0, width, height)
+        c.drawImage(screenshot, 0, 0, frame_width, frame_height, preserveAspectRatio=True, anchor='c')
         c.showPage()
 
     c.save()
@@ -66,7 +64,13 @@ def process_videos(root_dir):
             screenshots = create_screenshots(video_path, temp_screenshots_dir)
 
             if screenshots:
-                create_pdf_from_screenshots(screenshots, output_pdf)
+                # Determine video frame size for PDF page size
+                cap = cv2.VideoCapture(video_path)
+                frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                cap.release()
+
+                create_pdf_from_screenshots(screenshots, output_pdf, frame_width, frame_height)
             else:
                 print(f"No screenshots generated for: {video_path}")
 

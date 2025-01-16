@@ -37,19 +37,26 @@ def delete_pages_from_pdf(pdf_path, pages_to_delete):
     with open(new_path, "wb") as f:
         writer.write(f)
 
+def find_all_pdfs(root_dir):
+    """Recursively find all PDF files in the given directory."""
+    pdf_files = []
+    for subdir, _, files in os.walk(root_dir):
+        for file in files:
+            if file.endswith(".pdf"):
+                pdf_files.append(os.path.join(subdir, file))
+    return pdf_files
+
 def process_pdf(pdf_dir, resize_to=(100, 100), threshold=90):
     """Process PDFs to remove duplicate pages."""
-    pdf_files = [f for f in os.listdir(pdf_dir) if f.endswith(".pdf")]
+    pdf_files = find_all_pdfs(pdf_dir)
 
     for pdf_file in tqdm(pdf_files, desc="Processing PDFs"):
-        pdf_path = os.path.join(pdf_dir, pdf_file)
-
         # Step 1: Identify pages to delete
-        pages_to_delete = identify_pages_to_delete(pdf_path, resize_to, threshold)
+        pages_to_delete = identify_pages_to_delete(pdf_file, resize_to, threshold)
 
         # Step 2: Delete identified pages from the original PDF
-        delete_pages_from_pdf(pdf_path, pages_to_delete)
+        delete_pages_from_pdf(pdf_file, pages_to_delete)
 
 if __name__ == "__main__":
-    pdf_directory = input("Enter the directory containing the PDFs: ")
+    pdf_directory = input("Enter the root directory containing the PDFs: ")
     process_pdf(pdf_directory)
